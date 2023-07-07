@@ -7,14 +7,20 @@ in this demo i have two GKE autopilot clusters (and corresponding kubecontexts) 
 
 GKE, even with the `HttpLoadBalancing` add-on enabled, allows for running additional Ingress controllers. See [here](https://cloud.google.com/kubernetes-engine/docs/how-to/custom-ingress-controller) for more details. We'll use the `ingressClassName` approach.
 
+We'll use [whereami](https://github.com/GoogleCloudPlatform/kubernetes-engine-samples/tree/main/whereami) as the sample application, which is a JSON web service that returns information about the pod that's responding to the request.
+
 ### steps 
 
 ```
 # install nginx ingress on each cluster 
 # NOTE: this creates a public-facing K8s service called `ingress-nginx-controller` in the `ingress-nginx` namespace, which means you now have a public-facing way to get into your services you may not want
-# NOTE: you should change this service to `clusterIP` instead of `LoadBalancer`
+# NOTE: you should change this service to `clusterIP` instead of `LoadBalancer` - we'll do this in a minute
 kubectl --context=autopilot-cluster-us-central1 apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.1/deploy/static/provider/cloud/deploy.yaml
 kubectl --context=autopilot-cluster-us-east4 apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.8.1/deploy/static/provider/cloud/deploy.yaml
+
+# hack alert!!! we're going to patch the service type of `ingress-nginx-controller` to `clusterIP` - you should probably do this using something like Kustomize 
+kubectl --context=autopilot-cluster-us-central1 -n ingress-nginx patch svc ingress-nginx-controller -p '{"spec": {"type": "ClusterIP"}}'
+kubectl --context=autopilot-cluster-us-east4 -n ingress-nginx patch svc ingress-nginx-controller -p '{"spec": {"type": "ClusterIP"}}'
 
 # set up our target web service (in this case, `whereami`)
 kubectl --context=autopilot-cluster-us-central1 create namespace whereami-nginx-demo
