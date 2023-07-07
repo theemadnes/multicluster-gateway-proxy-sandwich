@@ -1,0 +1,13 @@
+nameSuffix: "-nginx-demo"
+namespace: whereami-nginx-demo
+commonLabels:
+  app: whereami-nginx-demo
+resources:
+- ../base
+patches:
+- path: cm-flag.yaml
+  target:
+    kind: ConfigMap
+- path: service-type.yaml
+  target:
+    kind: Service
